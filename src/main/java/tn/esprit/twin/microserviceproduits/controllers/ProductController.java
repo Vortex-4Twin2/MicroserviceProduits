@@ -3,6 +3,8 @@ package tn.esprit.twin.microserviceproduits.controllers;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import tn.esprit.twin.microserviceproduits.client.Offre;
 import tn.esprit.twin.microserviceproduits.entities.Product;
 import tn.esprit.twin.microserviceproduits.services.IProductService;
 
@@ -14,6 +16,40 @@ import java.util.List;
 public class ProductController {
 
     private final IProductService productService;
+    
+    /**
+     * Récupérer toutes les offres
+
+     */
+    @GetMapping("/offres")
+    public List<Offre> getAllOffres() {
+        return productService.getOffres();
+    }
+
+    /**
+     * Récupérer une offre par ID (
+
+     */
+    @GetMapping("/offres/{id}")
+    public Offre getOffreById(@PathVariable int id) {
+        return productService.getOffreById(id);
+    }
+    
+    /**
+     * Récupérer les offres actives d'un produit
+
+     */
+    @GetMapping("/{id}/offres/actives")
+    public ResponseEntity<List<Offre>> getOffresActivesByProductId(@PathVariable Long id) {
+        List<Offre> offres = productService.getOffresActivesByProductId(id);
+        return ResponseEntity.ok(offres);
+    }
+    @GetMapping("/exists/{id}")
+    public Boolean checkProductExists(@PathVariable("id") Long id){
+        return productService.checkProductExists(id);
+    }
+
+
 
     @GetMapping
     public List<Product> getAllProducts() {
