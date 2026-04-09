@@ -20,4 +20,7 @@ public interface IProductService {
     List<Offre> getOffres();
     Offre getOffreById(int id);
     List<Offre> getOffresActivesByProductId(Long productId);
+
+    // Advanced Business Logic (Métier Avancé)
+    List<Product> getLowStockProducts(Integer threshold);
 }

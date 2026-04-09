@@ -1,6 +1,7 @@
 package tn.esprit.twin.microserviceproduits.controllers;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -9,6 +10,7 @@ import tn.esprit.twin.microserviceproduits.entities.Product;
 import tn.esprit.twin.microserviceproduits.services.IProductService;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/products")
@@ -62,13 +64,24 @@ public class ProductController {
     }
 
     @PostMapping
-    public Product addProduct(@RequestBody Product product) {
-        return productService.addProduct(product);
+    public ResponseEntity<?> addProduct(@RequestBody Product product) {
+        try {
+            Product saved = productService.addProduct(product);
+            return ResponseEntity.ok(saved);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", e.getMessage()));
+        }
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Product> updateProduct(@PathVariable Long id, @RequestBody Product product) {
-        return ResponseEntity.ok(productService.updateProduct(id, product));
+    public ResponseEntity<?> updateProduct(@PathVariable Long id, @RequestBody Product product) {
+        try {
+            return ResponseEntity.ok(productService.updateProduct(id, product));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", e.getMessage()));
+        }
     }
 
     @DeleteMapping("/{id}")
@@ -86,4 +99,13 @@ public class ProductController {
     public List<String> getAllCategories() {
         return productService.getAllCategories();
     }
+
+    // ========== Advanced Business Logic Endpoints ==========
+
+    @GetMapping("/low-stock")
+    public ResponseEntity<List<Product>> getLowStockProducts(@RequestParam(defaultValue = "10") Integer threshold) {
+        return ResponseEntity.ok(productService.getLowStockProducts(threshold));
+    }
+
 }
+

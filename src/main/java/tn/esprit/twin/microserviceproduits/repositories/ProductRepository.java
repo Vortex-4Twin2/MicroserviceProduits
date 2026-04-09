@@ -14,4 +14,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     /** Retourne la liste des catégories distinctes (non nulles) triée alphabétiquement */
     @Query("SELECT DISTINCT p.category FROM Product p WHERE p.category IS NOT NULL ORDER BY p.category")
     List<String> findAllDistinctCategories();
+    
+    List<Product> findByStockQuantityLessThanEqual(Integer threshold);
 }
