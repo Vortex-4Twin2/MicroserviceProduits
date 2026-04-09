@@ -45,7 +45,14 @@ public class ProductServiceImpl implements IProductService {
     @Override
     public Product addProduct(Product product) {
         checkForSpamOrDuplicate(product, null);
-        return productRepository.save(product);
+        Product savedProduct = productRepository.save(product);
+        
+        // Notification immédiate si stock faible à la création
+        if (savedProduct.getStockQuantity() != null && savedProduct.getStockQuantity() < 5) {
+            sendLowStockNotification(savedProduct);
+        }
+        
+        return savedProduct;
     }
 
     @Override
@@ -58,7 +65,15 @@ public class ProductServiceImpl implements IProductService {
         existingProduct.setPrice(product.getPrice());
         existingProduct.setStockQuantity(product.getStockQuantity());
         existingProduct.setCategory(product.getCategory());
-        return productRepository.save(existingProduct);
+        
+        Product updatedProduct = productRepository.save(existingProduct);
+        
+        // Notification immédiate si stock faible après modification
+        if (updatedProduct.getStockQuantity() != null && updatedProduct.getStockQuantity() < 5) {
+            sendLowStockNotification(updatedProduct);
+        }
+        
+        return updatedProduct;
     }
 
     @Override
@@ -125,33 +140,40 @@ public class ProductServiceImpl implements IProductService {
                 log.warn("ALERT: Product [{}] '{}' is running low on stock! Current stock: {}", 
                         p.getId(), p.getName(), p.getStockQuantity());
                 
-                // Demande de l'utilisateur : N'envoyer le mail QUE si le stock est inférieur à 5
+                // On notifie seulement si < 5
                 if (p.getStockQuantity() != null && p.getStockQuantity() < 5) {
-                    try {
-                        if (mailSender != null) {
-                            SimpleMailMessage message = new SimpleMailMessage();
-                            message.setTo("souhir.krizi02@gmail.com"); 
-                            message.setSubject("🚨 URGENT: Stock Critique  - " + p.getName());
-                            message.setText("Bonjour Administrateur,\n\n" +
-                                            "Le produit '" + p.getName() + "' (ID: " + p.getId() + ") " +
-                                            "est en situation de STOCK CRITIQUE.\n" +
-                                            "Il reste actuellement : " + p.getStockQuantity() + " unité(s).\n\n" +
-                                            "Veuillez réapprovisionner ce produit immédiatement avant la rupture totale.");
-                            
-                            mailSender.send(message);
-                            log.info("AUTOMATIC NOTIFICATION: Email de stock critique envoyé à souhir.krizi02@gmail.com pour '{}'.", p.getName());
-                        } else {
-                            log.info("MAIL CONFIG MISSING: Impossible d'envoyer l'email. Simulation pour '{}'.", p.getName());
-                        }
-                    } catch (Exception e) {
-                        log.error("Erreur lors de l'envoi de l'email : {}", e.getMessage());
-                    }
+                    sendLowStockNotification(p);
                 } else {
                     log.info("Le produit '{}' est bas (Stock: {}) mais toujours >= 5. Pas de mail envoyé.", p.getName(), p.getStockQuantity());
                 }
             }
         }
         return lowStockProducts;
+    }
+
+    /**
+     * Helper pour l'envoi d'email de notification de stock critique.
+     */
+    private void sendLowStockNotification(Product p) {
+        try {
+            if (mailSender != null) {
+                SimpleMailMessage message = new SimpleMailMessage();
+                message.setTo("souhir.krizi02@gmail.com"); 
+                message.setSubject("🚨 URGENT: Stock Critique  - " + p.getName());
+                message.setText("Bonjour Administrateur,\n\n" +
+                                "Le produit '" + p.getName() + "' (ID: " + p.getId() + ") " +
+                                "est en situation de STOCK CRITIQUE.\n" +
+                                "Il reste actuellement : " + p.getStockQuantity() + " unité(s).\n\n" +
+                                "Veuillez réapprovisionner ce produit immédiatement avant la rupture totale.");
+                
+                mailSender.send(message);
+                log.info("AUTOMATIC NOTIFICATION: Email de stock critique envoyé à souhir.krizi02@gmail.com pour '{}'.", p.getName());
+            } else {
+                log.info("MAIL CONFIG MISSING: Impossible d'envoyer l'email. Simulation pour '{}'.", p.getName());
+            }
+        } catch (Exception e) {
+            log.warn("Erreur d'envoi d'email (non-bloquant pour la transaction): {}", e.getMessage());
+        }
     }
 
     // ========== Anti-Spam / Fake Product Detection ==========
