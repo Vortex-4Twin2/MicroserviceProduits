@@ -58,6 +58,12 @@ public class ProductServiceImpl implements IProductService {
     public List<Product> getProductsByCategory(String category) {
         return productRepository.findByCategoryIgnoreCase(category);
     }
+    
+    @Override
+    public List<String> getAllCategories() {
+        return productRepository.findAllDistinctCategories();
+    }
+    
     @Override
     public List<Offre> getOffres() {
         return offreClient.getAllOffres();

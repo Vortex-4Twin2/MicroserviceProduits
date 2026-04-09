@@ -12,6 +12,7 @@ public interface IProductService {
     Product updateProduct(Long id, Product product);
     void deleteProduct(Long id);
     List<Product> getProductsByCategory(String category);
+    List<String> getAllCategories();
     Boolean checkProductExists(Long id);
 
 

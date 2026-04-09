@@ -81,4 +81,9 @@ public class ProductController {
     public List<Product> getProductsByCategory(@RequestParam String category) {
         return productService.getProductsByCategory(category);
     }
+
+    @GetMapping("/categories")
+    public List<String> getAllCategories() {
+        return productService.getAllCategories();
+    }
 }
